@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz : Expertise Stranded Assets</title>
+    <style>
+        :root { --primary: #0088ce; --success: #27ae60; --error: #e74c3c; --bg: #f4f7f6; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); color: #333; line-height: 1.6; padding: 20px; }
+        .container { max-width: 700px; margin: 0 auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        h1 { color: var(--primary); text-align: center; border-bottom: 2px solid var(--primary); padding-bottom: 10px; margin-bottom: 30px; }
+        .question-block { display: none; }
+        .active { display: block; }
+        .option { display: block; background: #fff; border: 2px solid #ddd; padding: 15px; margin-bottom: 10px; border-radius: 8px; cursor: pointer; transition: 0.3s; }
+        .option:hover { background: #f0f7ff; border-color: var(--primary); }
+        .option.selected { border-color: var(--primary); background: #e3f2fd; }
+        .option.correct { border-color: var(--success) !important; background: #eafaf1 !important; font-weight: bold; }
+        .option.wrong { border-color: var(--error) !important; background: #fdedec !important; }
+        .feedback-box { display: none; margin-top: 15px; padding: 15px; border-radius: 8px; background: #fff3cd; border-left: 5px solid #ffc107; font-size: 0.95em; }
+        .btn-nav { width: 100%; background: var(--primary); color: white; border: none; padding: 15px; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: bold; margin-top: 20px; }
+        .btn-nav:disabled { background: #ccc; cursor: not-allowed; }
+        #final-report { display: none; }
+        .score-display { font-size: 40px; text-align: center; color: var(--primary); margin: 20px 0; font-weight: bold; }
+        .result-card { padding: 20px; border-radius: 10px; margin-top: 20px; }
+        .strength { background: #eafaf1; border-left: 5px solid #27ae60; padding: 15px; margin-bottom: 15px; }
+        .improvement { background: #fff9e6; border-left: 5px solid #f1c40f; padding: 15px; }
+        .tag { display: inline-block; background: #eee; padding: 2px 8px; border-radius: 4px; font-size: 11px; text-transform: uppercase; margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Focus : Les Actifs Échoués</h1>
+    
+    <div id="quiz-engine"></div>
+
+    <div id="final-report">
+        <div class="score-display" id="final-score"></div>
+        <div id="report-details"></div>
+        <button class="btn-nav" onclick="location.reload()" style="background:#2c3e50">Refaire le point</button>
+    </div>
+</div>
+
+<script>
+const quizData = [
+    {
+        q: "Quelle est la définition d'un 'stranded asset' (actif échoué) dans le cadre climatique ?",
+        opts: ["Un actif détruit physiquement par une inondation", "Un actif qui perd de sa valeur économique suite à un risque de transition ou physique", "Une infrastructure ferroviaire abandonnée par manque de clients", "Un investissement financier dont le rendement baisse"],
+        correct: 1,
+        exp: "Il s'agit d'actifs qui perdent prématurément leur valeur car ils deviennent incompatibles avec la transition écologique (ex: mines de charbon, locomotives diesel). [cite: 75, 78, 79, 80]",
+        cat: "Définition"
+    },
+    {
+        q: "Dans le cadre de la transition de la SNCF, le risque que les locomotives diesel deviennent inutilisables avant leur fin de vie est :",
+        opts: ["Un risque physique", "Un risque de transition", "Un risque de réputation", "Un risque de biodiversité"],
+        correct: 1,
+        exp: "Les contraintes réglementaires liées à la décarbonation créent un risque de transition qui peut 'échouer' des actifs polluants. [cite: 76, 80, 81]",
+        cat: "Risques"
+    },
+    {
+        q: "Si la valeur d'une infrastructure ferroviaire chute à cause de sa dépendance aux énergies fossiles, cela relève de :",
+        opts: ["La matérialité d'impact uniquement", "La matérialité financière", "La durabilité faible", "La norme ISO 26000"],
+        correct: 1,
+        exp: "La matérialité financière concerne les risques que l'environnement et la transition font peser sur la valeur économique de l'entreprise. [cite: 68, 72]",
+        cat: "Matérialité"
+    },
+    {
+        q: "Le concept de 'dévalorisation' d'actifs financiers fortement carbonés est une composante majeure :",
+        opts: ["Du Scope 1", "Des risques physiques", "Des risques de transition", "De la TNFD"],
+        correct: 2,
+        exp: "La dévalorisation est au cœur des risques de transition pour les industries carbonées. [cite: 80, 81]",
+        cat: "Risques"
+    },
+    {
+        q: "Un actif échoué peut être le résultat d'un risque physique, par exemple :",
+        opts: ["Une taxe carbone sur le diesel", "L'élévation du niveau de la mer rendant des voies littorales inexploitables", "Une nouvelle norme d'achats durables", "Une grève des transports"],
+        correct: 1,
+        exp: "Les risques physiques (aléas climatiques) peuvent rendre un actif physique inutilisable et donc économiquement 'échoué'. [cite: 77, 78]",
+        cat: "Risques"
+    },
+    {
+        q: "Dans un reporting extra-financier, l'appréciation de la matérialité des risques d'actifs se fait sur :",
+        opts: ["Les risques nets uniquement", "Les risques bruts", "Les bénéfices du trimestre", "La consommation d'énergie"],
+        correct: 1,
+        exp: "L'évaluation doit d'abord porter sur les risques bruts avant toute mesure d'atténuation. [cite: 155, 159]",
+        cat: "Reporting"
+    },
+    {
+        q: "Pour éviter que ses futurs achats ne deviennent des actifs échoués, quelle norme d'achats responsables la SNCF peut-elle suivre ?",
+        opts: ["ISO 14001", "ISO 20 400", "ISO 9001", "ISO 26000"],
+        correct: 1,
+        exp: "L'ISO 20 400 est la norme spécifique des achats responsables. [cite: 141]",
+        cat: "Stratégie"
+    },
+    {
+        q: "Pourquoi la durabilité forte est-elle pertinente pour la gestion des actifs échoués ?",
+        opts: ["Car elle permet de remplacer le capital naturel par de l'argent", "Car elle impose de préserver certains capitaux naturels sans condition de prix", "Car elle ignore les actifs financiers", "Car elle se focalise uniquement sur le carbone"],
+        correct: 1,
+        exp: "La durabilité forte refuse la substitution parfaite : elle accepte de limiter ou d'abandonner certains actifs financiers pour protéger la nature. [cite: 167]",
+        cat: "Stratégie"
+    },
+    {
+        q: "La matérialité financière d'un actif ferroviaire menacé par le stress hydrique signifie :",
+        opts: ["Que l'entreprise pollue l'eau", "Que le manque d'eau menace la rentabilité et le fonctionnement de l'actif", "Que l'entreprise doit calculer son Scope 2", "Que les tickets de train vont augmenter"],
+        correct: 1,
+        exp: "C'est l'impact du risque environnemental (pénurie d'eau) sur l'actif de l'entreprise (risque financier). [cite: 68, 72]",
+        cat: "Matérialité"
+    },
+    {
+        q: "Quel modèle d'entreprise vise spécifiquement à limiter ces risques en restant dans les 'limites planétaires' ?",
+        opts: ["La perma-entreprise", "L'entreprise régénérative", "L'entreprise à impact positif", "Aucun de ces modèles ne suffit seul"],
+        correct: 3,
+        exp: "Bien qu'utiles, ces modèles sont souvent des initiatives ponctuelles qui ne garantissent pas à elles seules le respect des limites planétaires globales. [cite: 174, 175]",
+        cat: "Stratégie"
+    }
+];
+
+let current = 0;
+let score = 0;
+let results = { "Définition": 0, "Risques": 0, "Matérialité": 0, "Reporting": 0, "Stratégie": 0 };
+let totalPerCat = { "Définition": 1, "Risques": 3, "Matérialité": 2, "Reporting": 1, "Stratégie": 3 };
+
+function render() {
+    const engine = document.getElementById('quiz-engine');
+    engine.innerHTML = "";
+    const item = quizData[current];
+    
+    const div = document.createElement('div');
+    div.className = "question-block active";
+    div.innerHTML = `
+        <span class="tag">${item.cat}</span>
+        <p><strong>Question ${current+1}/10 :</strong> ${item.q}</p>
+        <div id="options-list">
+            ${item.opts.map((o, i) => `<div class="option" onclick="select(${i})">${o}</div>`).join('')}
+        </div>
+        <div class="feedback-box" id="feedback"></div>
+        <button class="btn-nav" id="next-btn" onclick="nav()" disabled>Valider la réponse</button>
+    `;
+    engine.appendChild(div);
+}
+
+window.select = (idx) => {
+    if(document.getElementById('feedback').style.display === "block") return;
+    document.querySelectorAll('.option').forEach(el => el.classList.remove('selected'));
+    document.querySelectorAll('.option')[idx].classList.add('selected');
+    window.currentSelection = idx;
+    document.getElementById('next-btn').disabled = false;
+};
+
+window.nav = () => {
+    const feedback = document.getElementById('feedback');
+    const btn = document.getElementById('next-btn');
+    const options = document.querySelectorAll('.option');
+    const item = quizData[current];
+
+    if(feedback.style.display !== "block") {
+        options[window.currentSelection].classList.add(window.currentSelection === item.correct ? 'correct' : 'wrong');
+        options[item.correct].classList.add('correct');
+        feedback.innerHTML = item.exp;
+        feedback.style.display = "block";
+        if(window.currentSelection === item.correct) {
+            score++;
+            results[item.cat]++;
+        }
+        btn.innerText = current === 9 ? "Découvrir mon bilan" : "Continuer vers la suite";
+    } else {
+        if(current < 9) {
+            current++;
+            render();
+        } else {
+            finish();
+        }
+    }
+};
+
+function finish() {
+    document.getElementById('quiz-engine').style.display = 'none';
+    const report = document.getElementById('final-report');
+    report.style.display = 'block';
+    document.getElementById('final-score').innerText = `${score} / 10`;
+
+    let html = "";
+    if(score >= 8) {
+        html = `<div class="strength"><strong>C'est une excellente performance !</strong> Vous avez une vision très claire des mécanismes de dépréciation d'actifs liés à la transition.</div>
+                <div class="improvement"><strong>Piste de réflexion :</strong> Pour aller encore plus loin, n'hésitez pas à explorer les liens entre actifs échoués et biodiversité (TNFD).</div>`;
+    } else if(score >= 5) {
+        html = `<div class="strength"><strong>Bonnes bases acquises.</strong> Vous comprenez bien la différence entre risque physique et de transition.</div>
+                <div class="improvement"><strong>Axe de progrès :</strong> Un petit coup d'œil aux concepts de matérialité financière et de durabilité forte pourrait consolider votre expertise.</div>`;
+    } else {
+        html = `<div class="strength"><strong>Un bon début de réflexion.</strong> Vous avez saisi l'importance de faire évoluer les entreprises pour leur survie.</div>
+                <div class="improvement"><strong>Conseil doux :</strong> Le concept de 'stranded assets' est complexe. Prenez le temps de revoir les questions sur les risques bruts et la dévalorisation.</div>`;
+    }
+    document.getElementById('report-details').innerHTML = html;
+}
+
+render();
+</script>
+</body>
+</html>
